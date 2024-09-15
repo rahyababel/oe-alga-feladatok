@@ -106,7 +106,7 @@ namespace OE.ALGA.Paradigmak
 
         public bool MoveNext()
         {
-            if (aktualisIndex < n)
+            if (aktualisIndex < n - 1)
             {
                 aktualisIndex++;
                 return true;
