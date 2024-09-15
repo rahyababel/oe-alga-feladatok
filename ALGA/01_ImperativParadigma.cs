@@ -47,17 +47,16 @@ namespace OE.ALGA.Paradigmak
             }
         }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return new FeladatTaroloBejaro<T>(tarolo, n);
-        }
-
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
         }
 
-
+        public IEnumerator<T> GetEnumerator()
+        {
+            FeladatTaroloBejaro<T> bejaro = new FeladatTaroloBejaro<T>(tarolo, n);
+            return bejaro;
+        }   
 
     }
 
@@ -76,7 +75,8 @@ namespace OE.ALGA.Paradigmak
         {
             for (int i = 0; i < n; i++)
             {
-                if (tarolo[i].FuggosegTeljesul) {
+                if (tarolo[i].FuggosegTeljesul) 
+                {
                     tarolo[i].Vegrehajtas();
                 }
             }
@@ -87,21 +87,26 @@ namespace OE.ALGA.Paradigmak
     {
         private T[] tarolo;
         private int n;
-        private int aktualisIndex;
+        private int aktualisIndex = -1;
         public FeladatTaroloBejaro(T[] tarolo, int n)
         {
             this.tarolo = tarolo;
             this.n = n;
-            aktualisIndex = -1;
         }
 
-        public T Current => tarolo[aktualisIndex];
+        public T Current
+        {
+            get
+            {
+                return tarolo[aktualisIndex];
+            }
+        }
 
-        object IEnumerator.Current => Current;
+        object IEnumerator.Current => throw new NotImplementedException();
 
         public bool MoveNext()
         {
-            if (aktualisIndex < n - 1)
+            if (aktualisIndex < n)
             {
                 aktualisIndex++;
                 return true;
@@ -114,6 +119,9 @@ namespace OE.ALGA.Paradigmak
             aktualisIndex = -1;
         }
 
-        public void Dispose() { }
+        public void Dispose() 
+        {
+
+        }
     }
 }
