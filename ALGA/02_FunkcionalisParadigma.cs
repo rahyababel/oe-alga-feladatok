@@ -18,7 +18,6 @@ namespace OE.ALGA.Paradigmak
         }
         public IEnumerator<T> GetEnumerator()
         {
-            // FeltetelesFeladatTaroloBejaro visszaadása
             FeltetelesFeladatTaroloBejaro<T> bejaro = new FeltetelesFeladatTaroloBejaro<T>(tarolo, n, BejaroFeltetel = BejaroFeltetel ?? (x => true));
             return bejaro;
         }
