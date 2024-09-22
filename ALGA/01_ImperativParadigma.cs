@@ -52,7 +52,7 @@ namespace OE.ALGA.Paradigmak
             return GetEnumerator();
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public virtual IEnumerator<T> GetEnumerator()
         {
             FeladatTaroloBejaro<T> bejaro = new FeladatTaroloBejaro<T>(tarolo, n);
             return bejaro;
@@ -85,8 +85,8 @@ namespace OE.ALGA.Paradigmak
 
     public class FeladatTaroloBejaro<T> : IEnumerator<T> where T : IVegrehajthato
     {
-        private T[] tarolo;
-        private int n;
+        protected T[] tarolo;
+        protected int n;
         private int aktualisIndex = -1;
         public FeladatTaroloBejaro(T[] tarolo, int n)
         {
@@ -106,6 +106,7 @@ namespace OE.ALGA.Paradigmak
 
         public bool MoveNext()
         {
+
             if (aktualisIndex < n - 1)
             {
                 aktualisIndex++;
