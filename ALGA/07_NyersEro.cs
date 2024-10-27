@@ -101,12 +101,13 @@ namespace OE.ALGA.Optimalizalas
 
         public bool[] Generator(int i)
         {
-            bool[] pakolas = new bool[problema.n];
+            int szam = i - 1;
+            bool[] K = new bool[problema.n];
             for (int j = 0; j < problema.n; j++)
             {
-                pakolas[j] = (i & (1 << j)) != 0;
+                K[j] = ((Math.Floor(szam / Math.Pow(2, j)) % 2) == 1);
             }
-            return pakolas;
+            return K;
         }
 
         public double Josag(bool[] pakolas)
