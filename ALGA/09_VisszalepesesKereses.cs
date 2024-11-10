@@ -8,16 +8,15 @@ namespace OE.ALGA.Optimalizalas
 {
     public class VisszalepesesOptimalizacio<T>
     {
-        int n; 
-        int[] M; 
-        T[,] R; 
-        Func<int, T, bool> ft; 
-        Func<int, T, T[], bool> fk; 
-        Func<T[], double> josag;
+        protected int n;
+        protected int[] M;
+        protected T[,] R;
+        protected Func<int, T, bool> ft;
+        protected Func<int, T, T[], bool> fk;
+        protected Func<T[], float> josag;
+        public int LepesSzam { get; private set; }
 
-        public int LepesSzam { get; private set; } 
-
-        public VisszalepesesOptimalizacio(int n, int[] M, T[,] R, Func<int, T, bool> ft, Func<int, T, T[], bool> fk, Func<T[], double> josag)
+        public VisszalepesesOptimalizacio(int n, int[] M, T[,] R, Func<int, T, bool> ft, Func<int, T, T[], bool> fk, Func<T[], float> josag)
         {
             this.n = n;
             this.M = M;
@@ -25,92 +24,233 @@ namespace OE.ALGA.Optimalizalas
             this.ft = ft;
             this.fk = fk;
             this.josag = josag;
-            this.LepesSzam = 0;
         }
 
-        private void Backtrack(int szint, T[] E, ref bool van, ref T[] O)
+        public T[] OptimalisMegoldas()
         {
-            if (szint == n) 
-            {
-                LepesSzam++;
-                if (!van || josag(E) > josag(O))
-                {
-                    van = true;
-                    Array.Copy(E, O, n); 
-                }
-            }
+            bool van = false;
+            T[] E = new T[n];
+            T[] O = new T[n];
+            Backtrack(0, E, ref van, O);
+            if (van)
+                return O;
             else
+                throw new Exception("Nincs megoldás");
+        }
+
+        void Backtrack(int szint, T[] E, ref bool van, T[] O)
+        {
+            int i = -1;
+            while (i < M[szint] - 1)
             {
-                for (int i = 0; i < M[szint]; i++)
+                i++;
+                LepesSzam++;
+                if (ft(szint, R[szint, i]))
                 {
-                    if (ft(szint, R[szint, i]) && fk(szint, R[szint, i], E)) 
+                    if (fk(szint, R[szint, i], E))
                     {
-                        E[szint] = R[szint, i]; 
-                        Backtrack(szint + 1, E, ref van, ref O);
-                        E[szint] = default(T);
+                        E[szint] = R[szint, i];
+                        if (szint == n - 1)
+                        {
+                            if (!van || josag(E) > josag(O))
+                            {
+                                Array.Copy(E, O, n);
+                                van = true;
+                            }
+                        }
+                        else
+                            Backtrack(szint + 1, E, ref van, O);
                     }
                 }
             }
         }
-
-
-        public T[] OptimalisMegoldas()
-        {
-            T[] E = new T[n];
-            T[] O = new T[n];
-            bool van = false;
-            Backtrack(0, E, ref van, ref O); 
-            return van ? O : null;
-        }
     }
-
     public class VisszalepesesHatizsakPakolas
     {
-        private HatizsakProblema problema;
+        protected HatizsakProblema problema;
         public int LepesSzam { get; private set; }
-
         public VisszalepesesHatizsakPakolas(HatizsakProblema problema)
         {
             this.problema = problema;
         }
-
-        public bool[] Generator(int i)
+        public bool[] OptimalisMegoldas()
         {
-            int szam = i - 1;
-            bool[] K = new bool[problema.n];
-            for (int j = 0; j < problema.n; j++)
+            int[] M = new int[problema.n];
+            bool[,] R = new bool[problema.n, 2];
+            for (int i = 0; i < problema.n; i++)
             {
-                K[j] = ((Math.Floor(szam / Math.Pow(2, j)) % 2) == 1);
+                M[i] = 2;
+                R[i, 0] = true;
+                R[i, 1] = false;
             }
-            return K;
+
+            Func<int, bool, bool> ft = (szint, R) => true;
+
+            Func<int, bool, bool[], bool> fk = (szint, R, E) =>
+            {
+                int OsszSuly = 0;
+                for (int i = 0; i < szint; i++)
+                {
+                    if (E[i])
+                        OsszSuly += problema.w[i];
+                }
+                if (R)
+                    OsszSuly += problema.w[szint];
+
+                return OsszSuly <= problema.Wmax;
+            };
+
+            Func<bool[], float> josag = x =>
+            {
+                float OsszErtek = 0;
+                for (int i = 0; i < problema.n; i++)
+                {
+                    if (x[i])
+                        OsszErtek += problema.p[i];
+                }
+                return OsszErtek;
+            };
+
+            var opt = new VisszalepesesOptimalizacio<bool>(problema.n, M, R, ft, fk, josag);
+            bool[] OptimalisMegoldas = opt.OptimalisMegoldas();
+            LepesSzam = opt.LepesSzam;
+
+            return OptimalisMegoldas;
         }
 
-        public double Josag(bool[] pakolas)
+        public float OptimalisErtek()
         {
-            if (!problema.Ervenyes(pakolas))
-            {
-                return -1;
-            }
-            return problema.OsszErtek(pakolas);
+            float OsszErtek = 0;
+            bool[] opt = OptimalisMegoldas();
+            for (int i = 0; i < opt.Length; i++)
+                if (opt[i])
+                    OsszErtek += problema.p[i];
+            return OsszErtek;
+        }
+    }
+    public class SzetvalasztasEsKorlatozasOptimalizacio<T> : VisszalepesesOptimalizacio<T>
+    {
+        private Func<int, T[], float> fb;
+        public int LepesSzam { get; private set; } = 0;
+
+        public SzetvalasztasEsKorlatozasOptimalizacio(int n, int[] M, T[,] R, Func<int, T, bool> ft, Func<int, T, T[], bool> fk, Func<T[], float> josag, Func<int, T[], float> fb) : base(n, M, R, ft, fk, josag)
+        {
+            this.fb = fb;
         }
 
+        protected void Backtrack(int szint, T[] E, ref bool van, T[] O)
+        {
+            int i = -1;
+            while (i < M[szint] - 1)
+            {
+                i++;
+                LepesSzam++;
+
+                if (ft(szint, R[szint, i]))
+                {
+                    if (fk(szint, R[szint, i], E))
+                    {
+                        E[szint] = R[szint, i];
+
+                        if (josag(E) + fb(szint, E) <= josag(O))
+                            continue;
+
+                        if (szint == n - 1)
+                        {
+                            if (!van || josag(E) > josag(O))
+                            {
+                                Array.Copy(E, O, n);
+                                van = true;
+                            }
+                        }
+                        else
+                        {
+                            Backtrack(szint + 1, E, ref van, O);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public class SzetvalasztasEsKorlatozasHatizsakPakolas : VisszalepesesHatizsakPakolas
+    {
+        public int LepesSzam { get; private set; }
+        public SzetvalasztasEsKorlatozasHatizsakPakolas(HatizsakProblema problema) : base(problema) 
+        { 
+
+        }
 
         public bool[] OptimalisMegoldas()
         {
-            int lehetsegesMegoldasok = (int)Math.Pow(2, problema.n);
-            NyersEro<bool[]> megoldo = new NyersEro<bool[]>(
-                lehetsegesMegoldasok,
-                Generator, 
-                Josag    
-            );
+            int[] M = new int[problema.n];
+            bool[,] R = new bool[problema.n, 2];
+            for (int i = 0; i < problema.n; i++)
+            {
+                M[i] = 2;
+                R[i, 0] = true;
+                R[i, 1] = false;
+            }
 
-            bool[] optimalisPakolas = megoldo.OptimalisMegoldas();
-            LepesSzam = megoldo.LepesSzam; 
-            return optimalisPakolas;
-        }
-        public double OptimalisErtek()
-        {
-            return problema.OsszErtek(OptimalisMegoldas()); 
+            Func<int, bool, bool> ft = (szint, R) => true;
+
+            Func<int, bool, bool[], bool> fk = (szint, R, E) =>
+            {
+                int OsszSuly = 0;
+                for (int i = 0; i < szint; i++)
+                {
+                    if (E[i])
+                        OsszSuly += problema.w[i];
+                }
+                if (R)
+                    OsszSuly += problema.w[szint];
+
+                return OsszSuly <= problema.Wmax;
+            };
+
+            Func<bool[], float> josag = x =>
+            {
+                float OsszErtek = 0;
+                for (int i = 0; i < problema.n; i++)
+                {
+                    if (x[i])
+                        OsszErtek += problema.p[i];
+                }
+                return OsszErtek;
+            };
+
+            Func<int, bool[], float> fb = (szint, E) =>
+            {
+                float becsultErtek = 0;
+                int OsszSuly = 0;
+
+                for (int i = 0; i < szint; i++)
+                {
+                    if (E[i])
+                        OsszSuly += problema.w[i];
+                }
+
+                for (int i = szint; i < problema.n; i++)
+                {
+                    if (OsszSuly + problema.w[i] <= problema.Wmax)
+                    {
+                        becsultErtek += problema.p[i];
+                        OsszSuly += problema.w[i];
+                    }
+                    else
+                    {
+                        float maradekHelyAranya = (float)(problema.Wmax - OsszSuly) / problema.w[i];
+                        becsultErtek += maradekHelyAranya * problema.p[i];
+                        break;
+                    }
+                }
+                return becsultErtek;
+            };
+
+            var opt = new SzetvalasztasEsKorlatozasOptimalizacio<bool>(problema.n, M, R, ft, fk, josag, fb);
+            bool[] OptimalisMegoldas = opt.OptimalisMegoldas();
+            LepesSzam = opt.LepesSzam;
+
+            return OptimalisMegoldas;
         }
     }
 }
