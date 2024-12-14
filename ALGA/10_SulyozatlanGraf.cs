@@ -11,10 +11,10 @@ namespace OE.ALGA.Adatszerkezetek
         public int Honnan { get; }
         public int Hova { get; }
 
-        public EgeszGrafEl(int honnan, int hova)
+        public EgeszGrafEl(int Honnan, int Hova)
         {
-            this.Honnan = honnan;
-            this.Hova = hova;
+            this.Honnan = Honnan;
+            this.Hova = Hova;
         }
 
         public virtual int CompareTo(object? obj)
